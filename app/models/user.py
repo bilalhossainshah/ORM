@@ -9,7 +9,11 @@ class User(Base):
     full_name = Column(String(100))
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+    verification_token = Column(String, nullable=True)
+    reset_token = Column(String, nullable=True)
+    reset_token_expires = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
     def __repr__(self):
-        return f"<User(email='{self.email}')>"
+        return f"<User(email='{self.email}', verified={self.is_verified})>"
