@@ -42,9 +42,7 @@ def register_user(
 
 @router.post("/verify-email/", response_model=user_schemas.User)
 def verify_email(request: user_schemas.EmailVerificationRequest, db: Session = Depends(get_db)):
-    """
-    Verify email using the code sent to user's email.
-    """
+    
     print(f"Verification request received: code={request.code}")
     user = user_crud.verify_email(db, code=request.code)
     if not user:
@@ -55,10 +53,7 @@ def verify_email(request: user_schemas.EmailVerificationRequest, db: Session = D
 
 @router.post("/login/")
 def login_user(user_credentials: user_schemas.UserLogin, db: Session = Depends(get_db)):
-    """
-    User login endpoint.
-    Returns JWT access token on successful authentication.
-    """
+    
     db_user = user_crud.get_user_by_email(db, email=user_credentials.email)
     if not db_user:
         raise HTTPException(status_code=401, detail="Incorrect email or password")
@@ -66,7 +61,6 @@ def login_user(user_credentials: user_schemas.UserLogin, db: Session = Depends(g
     if not user_crud.verify_password(user_credentials.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     
-    # Create JWT token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"user_id": db_user.id, "email": db_user.email},
@@ -83,9 +77,7 @@ def login_user(user_credentials: user_schemas.UserLogin, db: Session = Depends(g
 
 @router.get("/{user_id}", response_model=user_schemas.User)
 def read_user(user_id: int, db: Session = Depends(get_db)):
-    """
-    Get user profile information.
-    """
+  
     db_user = user_crud.get_user(db, user_id=user_id)
     if db_user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

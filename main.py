@@ -1,32 +1,37 @@
 from fastapi import FastAPI
-from database import engine, Base
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
+from database import engine, Base
 from mongo_database import connect_mongo, close_mongo, mongo_db 
 from app.routers import product, category, cart, user, mongo_router
-
 import app.models 
-from dotenv import load_dotenv
+
 load_dotenv()
 
-
-print("Creating database tables if they don't exist...")
-Base.metadata.create_all(bind=engine)
-print("Database tables ensured.")
-
-
+# Initialize FastAPI app
 app = FastAPI(
     title="E-commerce Hybrid API",
     description="A complete API with organized routers for Products, Users, and Carts.",
     version="1.0.0",
 )
 
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for frontend access
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files directory for uploaded images
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Create database tables
+print("Creating database tables if they don't exist...")
+Base.metadata.create_all(bind=engine)
+print("Database tables ensured.")
 
 @app.on_event("startup")
 async def startup_db_client():

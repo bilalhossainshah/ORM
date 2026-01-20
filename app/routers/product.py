@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
 from sqlalchemy.orm import Session
 from typing import List
-
+from sqlalchemy import or_
+from app import models, schemas
+from app.models.product import Product
 from database import get_db
 from app.schemas import product as product_schemas
 from app.crud import product as product_crud
 from app.utils.file_handler import save_product_image
+from app.routers.utils import upload_to_s3
+
 
 router = APIRouter()
 
@@ -21,13 +25,7 @@ def search_products(
     q: str = Query(..., min_length=1, max_length=100),
     db: Session = Depends(get_db)
 ):
-    """
-    Search products by title or description
     
-    Example: /products/search/?q=jacket
-    """
-    from sqlalchemy import or_
-    from app.models.product import Product
     
     products = db.query(Product).filter(
         or_(
@@ -52,11 +50,7 @@ def filter_products(
     brand: str = Query(None),
     db: Session = Depends(get_db)
 ):
-    """
-    Filter products by category, price range, and brand
     
-    Example: /products/filter/?category=electronics&min_price=100&max_price=500
-    """
     from sqlalchemy import and_
     from app.models.product import Product
     
@@ -84,15 +78,29 @@ def filter_products(
     return products
 
 
-@router.post("/upload-image/", response_model=dict)
-async def upload_product_image(file: UploadFile = File(...)):
-    """
-    Upload product image and return the image URL
+@router.post("/upload-image/", response_model=product_schemas.Product)
+def create_product(form_data: product_schemas.ProductCreateForm = Depends(), db: Session = Depends(get_db),image: UploadFile = File()):
+    payload = form_data.to_schema()
+    category = db.query(models.Category).get(payload.category_id)
+    if not category:
+        raise HTTPException(status_code=400, detail="Category does not exist")
     
-    Returns: {"image_url": "/uploads/products/filename.jpg"}
-    """
-    image_url = await save_product_image(file)
-    return {"image_url": image_url}
+    print("---------------------------",image.filename)
+    file_url=upload_to_s3(image)
+    print("File uploaded to S3 at URL:", file_url) 
+
+
+    
+    product = models.Product(
+        title=payload.name,
+        description=payload.description,
+        price=payload.price,
+        category_id=payload.category_id,
+        total_units=payload.total_units,
+        product_image=file_url,
+        remaining_units=payload.remaining_units if payload.remaining_units is not None else payload.total_units,
+        quantity=payload.quantity
+    )
 
 @router.post("/", response_model=product_schemas.Product, status_code=status.HTTP_201_CREATED)
 def create_new_product(product: product_schemas.ProductCreate, db: Session = Depends(get_db)):
@@ -129,3 +137,5 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     return {"message": "Product deleted successfully"}
+
+

@@ -20,11 +20,7 @@ def add_item_to_cart(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ):
-    """
-    Add item to cart - Protected route requiring JWT token.
-    The user_id from the token is verified against the input.
-    """
-    # Verify token user_id matches input user_id
+    
     if current_user.user_id != input_data.user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -52,9 +48,7 @@ def update_cart_item(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ):
-    """
-    Update cart item quantity - Protected route requiring JWT token.
-    """
+    
     from app.models.cart import CartItem
     
     cart_item = db.query(CartItem).filter(CartItem.id == item_id).first()
@@ -64,7 +58,6 @@ def update_cart_item(
             detail="Cart item not found"
         )
     
-    # Verify item belongs to current user through order
     order = cart_crud.get_order(db, order_id=cart_item.order_id)
     if order.user_id != current_user.user_id:
         raise HTTPException(
@@ -78,7 +71,6 @@ def update_cart_item(
             detail="Quantity must be greater than 0"
         )
     
-    # Check stock
     product = product_crud.get_product(db, product_id=cart_item.product_id)
     if quantity > product.stock:
         raise HTTPException(
@@ -99,9 +91,7 @@ def remove_cart_item(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ):
-    """
-    Remove item from cart - Protected route requiring JWT token.
-    """
+   
     from app.models.cart import CartItem
     
     cart_item = db.query(CartItem).filter(CartItem.id == item_id).first()
@@ -111,7 +101,6 @@ def remove_cart_item(
             detail="Cart item not found"
         )
     
-    # Verify item belongs to current user through order
     order = cart_crud.get_order(db, order_id=cart_item.order_id)
     if order.user_id != current_user.user_id:
         raise HTTPException(
@@ -131,9 +120,7 @@ def view_cart_details(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ):
-    """
-    View cart details - Protected route requiring JWT token.
-    """
+   
     order = cart_crud.get_order(db, order_id=order_id)
     if not order:
         raise HTTPException(
@@ -141,7 +128,6 @@ def view_cart_details(
             detail="Order (Cart) not found" 
         )
     
-    # Verify the order belongs to the authenticated user
     if order.user_id != current_user.user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -161,10 +147,7 @@ def process_checkout(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ):
-    """
-    Process checkout with shipping address - Protected route requiring JWT token.
-    Integrates with payment gateway (Stripe/PayPal).
-    """
+    
     order = cart_crud.get_order(db, order_id=order_id)
     if not order:
         raise HTTPException(
@@ -172,24 +155,19 @@ def process_checkout(
             detail="Order not found"
         )
     
-    # Verify the order belongs to the authenticated user
     if order.user_id != current_user.user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only checkout your own order"
         )
     
-    # Verify order IDs match
     if checkout_data.order_id != order_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Order ID mismatch"
         )
     
-    # TODO: Integrate with Stripe/PayPal here
-    # For now, simulate payment success
     
-    # Update order status to Processing
     updated_order = cart_crud.update_order_status(db, order_id=order_id, new_status="Processing")
     
     if not updated_order:
@@ -198,7 +176,6 @@ def process_checkout(
             detail="Could not process checkout"
         )
     
-    # Calculate estimated delivery (5-7 business days)
     estimated_delivery = (datetime.utcnow() + timedelta(days=6)).strftime("%Y-%m-%d")
     
     return OrderConfirmation(

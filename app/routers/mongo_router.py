@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body, Request, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from app.schemas.wishlist import WishlistItem
 from typing import List
-from mongo_database import get_mongo_db # The dependency function
+from mongo_database import get_mongo_db 
 from bson import ObjectId
 
 router = APIRouter()
