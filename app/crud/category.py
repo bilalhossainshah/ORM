@@ -1,4 +1,3 @@
-
 from sqlalchemy.orm import Session
 from app.models import category as models_category
 from app.models import product as models_product 

@@ -1,5 +1,5 @@
 
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
@@ -14,6 +14,8 @@ class CartItem(BaseModel):
     quantity: int
     price: Decimal
     
+def round_price(cls, v):
+    return v.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) 
     class Config:
         orm_mode = True 
 

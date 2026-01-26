@@ -8,7 +8,7 @@ from app.utils.email_utils import send_verification_email, send_password_reset_e
 from datetime import timedelta
 import asyncio
 from fastapi import BackgroundTasks
-from app.utils.email_utils import send_verification_email
+from app.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -57,6 +57,13 @@ def login_user(user_credentials: user_schemas.UserLogin, db: Session = Depends(g
     db_user = user_crud.get_user_by_email(db, email=user_credentials.email)
     if not db_user:
         raise HTTPException(status_code=401, detail="Incorrect email or password")
+    
+    if not db_user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Please verify your email before logging in"
+    )
+
     
     if not user_crud.verify_password(user_credentials.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")

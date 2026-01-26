@@ -5,16 +5,16 @@ from typing import Optional
 from fastapi import Form
 
 class ProductBase(BaseModel):
-    name: str = Field(..., example="Laptop Model X")
-    description: Optional[str] = Field(None, example="A fast, light laptop.")
+    title: str = Field(..., example="anyhting")
+    description: Optional[str] = Field(None, example="anything description")
     price: Decimal = Field(..., gt=0, decimal_places=2, example=999.99)
     brand: Optional[str] = Field(None, example="BrandName")
     image_url: Optional[str] = Field(None, example="http://example.com/images/laptop.jpg")
     in_stock: bool = Field(True, example=True)
 
 class ProductCreate(ProductBase):
-    name: str = Field(..., example="Laptop Model X")
-    description: Optional[str] = Field(None, example="A fast, light laptop.")
+    title: str = Field(..., example="anything")
+    description: Optional[str] = Field(None, example="anything description")
     price: Decimal = Field(..., gt=0, decimal_places=2, example=999.99)
 
     category_id: int = Field(..., example=1)
@@ -50,7 +50,7 @@ class ProductCreateForm:
         quantity: int = Form(...),
         
     ):
-        self.name = title
+        self.title = title
         self.description = description
         self.price = price
         self.category_id = category_id
@@ -60,7 +60,7 @@ class ProductCreateForm:
 
     def to_schema(self) -> ProductCreate:
      return ProductCreate(
-        title=self.name,
+        title=self.title,
         description=self.description,
         price=self.price,
         category_id=self.category_id,

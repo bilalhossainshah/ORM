@@ -21,7 +21,7 @@ def get_user_by_email(db: Session, email: str):
 
 def create_user(db: Session, user: schemas_user.UserCreate):
     hashed_password = get_password_hash(user.password)
-    verification_token = str(secrets.randbelow(1000000)).zfill(6)  # 6-digit code
+    verification_token = str(secrets.randbelow(1000000)).zfill(6)  
     
     db_user = models_user.User(
         email=user.email, 
@@ -36,7 +36,7 @@ def create_user(db: Session, user: schemas_user.UserCreate):
     return db_user, verification_token
 
 def verify_email(db: Session, code: str):
-    """Mark email as verified by code"""
+    
     user = db.query(models_user.User).filter(
         models_user.User.verification_token == code
     ).first()
@@ -63,7 +63,6 @@ def update_user(db: Session, user_id: int, user_update: dict):
     return db_user
 
 def create_password_reset_token(db: Session, email: str):
-    """Create password reset token for user"""
     user = get_user_by_email(db, email)
     if not user:
         return None
@@ -78,7 +77,6 @@ def create_password_reset_token(db: Session, email: str):
     return reset_token
 
 def reset_password(db: Session, token: str, new_password: str):
-    """Reset password using token"""
     user = db.query(models_user.User).filter(
         models_user.User.reset_token == token
     ).first()

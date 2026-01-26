@@ -11,7 +11,7 @@ def get_order(db: Session, order_id: int):
 
 
 def get_pending_order_for_user(db: Session, user_id: int):
-    return db.query(models_cart.Order).filter(
+    return db.query(models_cart.Order).filter(                  
         models_cart.Order.user_id == user_id,
         models_cart.Order.status == "Pending"
     ).first()
