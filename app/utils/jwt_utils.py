@@ -3,8 +3,9 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from pydantic import BaseModel
+import os
 
-SECRET_KEY = "yb754f8a036326908537cf0a06f037fd2d6ccfe1a68484a3f1efedd43f328f4f9"
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -39,7 +40,8 @@ from jose import JWTError, jwt
 def verify_token(token: str) -> Optional[TokenData]:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        
+        print("JWT PAYLOAD:", payload)
+
         user_id = payload.get("user_id")
         email = payload.get("email")
 

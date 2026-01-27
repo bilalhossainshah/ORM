@@ -8,6 +8,7 @@ from app.crud import product as product_crud
 from app.dependencies import get_current_user
 from app.utils.jwt_utils import TokenData
 from datetime import datetime, timedelta 
+from app.models.cart import OrderItem
 
 router = APIRouter()
 
@@ -32,13 +33,13 @@ def add_item_to_cart(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found or out of stock")
     
    
-    cart_item = cart_crud.handle_add_to_cart(
+    orders_item = cart_crud.handle_add_to_cart(
         db=db, 
         user_id=input_data.user_id,
         item_details=input_data, 
         current_price=product.price
     )
-    return cart_item
+    return orders_item
 
 
 @router.put("/update-item/{item_id}")
@@ -92,23 +93,23 @@ def remove_cart_item(
     current_user: TokenData = Depends(get_current_user)
 ):
    
-    from app.models.cart import CartItem
     
-    cart_item = db.query(CartItem).filter(CartItem.id == item_id).first()
-    if not cart_item:
+    
+    orders_item = db.query(OrderItem).filter(OrderItem.id == item_id).first()
+    if not orders_item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Cart item not found"
         )
     
-    order = cart_crud.get_order(db, order_id=cart_item.order_id)
+    order = cart_crud.get_order(db, order_id=orders_item.order_id)
     if order.user_id != current_user.user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only remove items from your own cart"
         )
     
-    db.delete(cart_item)
+    db.delete(orders_item)
     db.commit()
     
     return {"message": "Item removed from cart"}
